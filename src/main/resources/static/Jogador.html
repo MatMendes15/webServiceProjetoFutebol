@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de jogadores</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #container {
+            max-width: 800px;
+            margin-top: 50px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="button"] {
+            padding: 10px;
+            margin-bottom: 10px;
+            width: calc(100% - 20px);
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        input[type="button"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        input[type="button"]:hover {
+            background-color: #45a049;
+        }
+
+        #paragrafoMensagem {
+            font-weight: bold;
+            margin-top: 20px;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Gerenciamento de jogadores</h1>
+        <table>
+            <tr>
+                <td>ID:</td>
+                <td><input type="text" id="txtId"></td>
+            </tr>
+            <tr>
+                <td>Nome:</td>
+                <td><input type="text" id="txtNome"></td>
+            </tr>
+            <tr>
+                <td>Idade:</td>
+                <td><input type="text" id="txtIdade"></td>
+            </tr>
+            <tr>
+                <td>Posição:</td>
+                <td><input type="text" id="txtPosicao"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <input type="button" value="Novo" onclick="novoJogador()" id="btnNovo">
+                    <input type="button" value="Salvar" onclick="salvarJogador()" id="btnSalvar">
+                    <input type="button" value="Apagar" onclick="apagarJogador()" id="btnApagar">
+                    <input type="button" value="Cancelar" onclick="cancelarJogador()" id="btnCancelar">
+                </td>
+            </tr>
+        </table>
+
+        <p id="paragrafoMensagem"></p>
+
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Idade</th>
+                <th>Posição</th>
+            </tr>
+            <tbody id="corpoTabelaJogador"> </tbody>
+        </table>
+    </div>
+
+    <script>
+        const corpoTabela = document.querySelector('#corpoTabelaJogador');
+        const paragrafoMensagem = document.querySelector('#paragrafoMensagem');
+        const txtNome = document.querySelector('#txtNome');
+        const txtIdade = document.querySelector('#txtIdade');
+        const txtPosicao = document.querySelector('#txtPosicao');
+        const txtId = document.querySelector('#txtId');
+    
+        const btnNovo = document.querySelector('#btnNovo');
+        const btnSalvar = document.querySelector('#btnSalvar');
+        const btnApagar = document.querySelector('#btnApagar');
+        const btnCancelar = document.querySelector('#btnCancelar');
+        var criandoNovoJogador = false;
+    
+        inicializar();
+    
+        function inicializar() {
+            criandoNovoJogador = false;
+            paragrafoMensagem.innerHTML = 'Pressione o botão Novo ou selecione um jogador da lista:';
+            txtId.value = '';
+            txtNome.value = '';
+            txtIdade.value = '';
+            txtPosicao.value = '';
+            txtId.disabled = true;
+            txtNome.disabled = true;
+            txtIdade.disabled = true;
+            txtPosicao.disabled = true;
+            btnNovo.disabled = false;
+            btnSalvar.disabled = true;
+            btnApagar.disabled = true;
+            btnCancelar.disabled = true;
+            listarTodosJogadores();
+        }
+    
+        async function listarTodosJogadores() {
+            const URL = `/api/jogadores`;
+            fetch(URL)
+                .then(resposta => {
+                    if (!resposta.ok) throw Error(resposta.status);
+                    return resposta;
+                })
+                .then(resposta => resposta.json())
+                .then(jsonResponse => preencherTabela(jsonResponse))
+                .catch(function (error) {
+                    paragrafoMensagem.innerHTML = "Erro ao listar jogadores (código " + error.message + ")";
+                });
+        }
+    
+        function preencherTabela(jogadores) {
+            var linhasTabela = '';
+            var n = jogadores.length;
+            for (var i = 0; i < n; i++) {
+                var j = jogadores[i];
+                linhasTabela +=
+                    `<tr><td><a href="javascript:void(0)" onclick="selecionarJogador('${j.id}','${j.nome}','${j.idade}','${j.posicao}')">`
+                    + j.id + '</a></td>' +
+                    '<td>' + j.nome + '</td>' +
+                    '<td>' + j.idade + '</td>' +
+                    '<td>' + j.posicao + '</td></tr>\n';
+            }
+            corpoTabela.innerHTML = linhasTabela;
+        }
+    
+        function selecionarJogador(id, nome, idade, posicao) {
+            criandoNovoJogador = false;
+            paragrafoMensagem.innerHTML = 'Altere e salve os dados do jogador, ou então apague o registro do jogador.'
+            txtId.value = id;
+            txtNome.value = nome;
+            txtIdade.value = idade;
+            txtPosicao.value = posicao;
+            txtId.disabled = true;
+            txtNome.disabled = false;
+            txtIdade.disabled = false;
+            txtPosicao.disabled = false;
+            btnNovo.disabled = true;
+            btnSalvar.disabled = false;
+            btnApagar.disabled = false;
+            btnCancelar.disabled = false;
+        }
+    
+        function novoJogador() {
+            paragrafoMensagem.innerHTML = 'Preencha os dados do novo jogador...';
+            criandoNovoJogador = true;
+    
+            txtId.value = '';
+            txtNome.value = '';
+            txtIdade.value = '';
+            txtPosicao.value = '';
+    
+            txtId.disabled = true;
+            txtNome.disabled = false;
+            txtIdade.disabled = false;
+            txtPosicao.disabled = false;
+    
+            btnNovo.disabled = true;
+            btnSalvar.disabled = false;
+            btnApagar.disabled = true;
+            btnCancelar.disabled = false;
+        }
+    
+        function salvarJogador() {
+            if (criandoNovoJogador) {
+                criarJogador();
+            } else {
+                alterarJogador();
+            }
+        }
+    
+        async function criarJogador() {
+            const URL = `/api/jogadores`;
+            const dadosJogador = {
+                'nome': txtNome.value,
+                'idade': txtIdade.value,
+                'posicao': txtPosicao.value
+            };
+            const postRequest = {
+                method: 'POST',
+                body: JSON.stringify(dadosJogador),
+                headers: { 'Content-type': 'application/json' }
+            };
+            fetch(URL, postRequest)
+                .then(resposta => { if (!resposta.ok) throw Error(resposta.status); return resposta; })
+                .then(resposta => resposta.json())
+                .then(jsonResponse => inicializar())
+                .catch(function (error) { paragrafoMensagem.innerHTML = 'Erro ao criar novo jogador (código ' + error.message + ')'; });
+        }
+    
+        async function alterarJogador() {
+            const ID = txtId.value;
+            const URL = `/api/jogadores/${ID}`;
+            const dadosJogador = {
+                'id': ID,
+                'nome': txtNome.value,
+                'idade': txtIdade.value,
+                'posicao': txtPosicao.value
+            };
+            const putRequest = {
+                method: 'PUT',
+                body: JSON.stringify(dadosJogador),
+                headers: { 'Content-type': 'application/json' }
+            };
+            fetch(URL, putRequest)
+                .then(resposta => { if (!resposta.ok) throw Error(resposta.status); return resposta; })
+                .then(resposta => resposta.json())
+                .then(jsonResponse => inicializar())
+                .catch(function (error) { paragrafoMensagem.innerHTML = 'Erro ao alterar jogador (código ' + error.message + ')'; });
+        }
+    
+        function cancelarJogador() {
+            inicializar();
+        }
+    
+        async function apagarJogador() {
+            const ID = txtId.value;
+            const URL = `/api/jogadores/${ID}`;
+            const deleteRequest = {
+                method: 'DELETE'
+            };
+            fetch(URL, deleteRequest)
+                .then(resposta => { if (!resposta.ok) throw Error(resposta.status); return resposta; })
+                .then(resposta => inicializar())
+                .catch(function (error) { paragrafoMensagem.innerHTML = 'Erro ao apagar jogador (código ' + error.message + ')'; });
+        }
+    </script>
+    
+</body>
+</html>
